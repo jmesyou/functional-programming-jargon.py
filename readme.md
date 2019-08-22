@@ -75,29 +75,31 @@ __Table of Contents__
 
 The number of arguments a function takes. From words like unary, binary, ternary, etc. This word has the distinction of being composed of two suffixes, "-ary" and "-ity." Addition, for example, takes two arguments, and so it is defined as a binary function or a function with an arity of two. Such a function may sometimes be called "dyadic" by people who prefer Greek roots to Latin. Likewise, a function that takes a variable number of arguments is called "variadic," whereas a binary function must be given two and only two arguments, currying and partial application notwithstanding (see below).
 
-```js
-const sum = (a, b) => a + b
+```python
+from inspect import signature 
 
-const arity = sum.length
-console.log(arity) // 2
+sum = lambda a, b: a + b
 
-// The arity of sum is 2
+arity = len(signature(sum).parameters)
+print(arity) # 2
+
+# The arity of add is 2
 ```
 
 ## Higher-Order Functions (HOF)
 
 A function which takes a function as an argument and/or returns a function.
 
-```js
-const filter = (predicate, xs) => xs.filter(predicate)
+```python
+filter = lambda predicate, xs: [x for x in xs if predicate(xs)] 
 ```
 
-```js
-const is = (type) => (x) => Object(x) instanceof type
+```python
+is_a = lambda T: lambda x: type(x) is T
 ```
 
-```js
-filter(is(Number), [0, '1', 2, null]) // [0, 2]
+```python
+filter(is_a(int), [0, '1', 2, None]) # [0, 2]
 ```
 
 ## Closure
@@ -109,14 +111,14 @@ A closure is a scope which captures local variables of a function for access eve
 ie. they allow referencing a scope after the block in which the variables were declared has finished executing.
 
 
-```js
-const addTo = x => y => x + y;
-var addToFive = addTo(5);
-addToFive(3); //returns 8
+```python
+add_to = lambda x: lambda y: x + y
+add_to_five = add_to(5)
+add_to_five(3) # returns 8
 ```
-The function ```addTo()``` returns a function(internally called ```add()```), lets store it in a variable called ```addToFive``` with a curried call having parameter 5.
+The function ```add_to()``` returns a function(internally called ```add()```), lets store it in a variable called ```add_to_five``` with a curried call having parameter 5.
 
-Ideally, when the function ```addTo``` finishes execution, its scope, with local variables add, x, y should not be accessible. But, it returns 8 on calling ```addToFive()```. This means that the state of the function ```addTo``` is saved even after the block of code has finished executing, otherwise there is no way of knowing that ```addTo``` was called as ```addTo(5)``` and the value of x was set to 5.
+Ideally, when the function ```add_to``` finishes execution, its scope, with local variables add, x, y should not be accessible. But, it returns 8 on calling ```add_to_five()```. This means that the state of the function ```add_to``` is saved even after the block of code has finished executing, otherwise there is no way of knowing that ```add_to``` was called as ```add_to(5)``` and the value of x was set to 5.
 
 Lexical scoping is the reason why it is able to find the values of x and add - the private variables of the parent which has finished executing. This value is called a Closure.
 
@@ -135,28 +137,28 @@ __Further reading/Sources__
 Partially applying a function means creating a new function by pre-filling some of the arguments to the original function.
 
 
-```js
-// Helper to create partially applied functions
-// Takes a function and some arguments
-const partial = (f, ...args) =>
-  // returns a function that takes the rest of the arguments
-  (...moreArgs) =>
-    // and calls the original function with all of them
-    f(...args, ...moreArgs)
+```python
+# Helper to create partially applied functions
+# Takes a function and some arguments
+partial = lambda f, *args: 
+  # returns a function that takes the rest of the arguments
+  lambda *more_args:
+    # and calls the original function with all of them
+    f(args, more_args)
+# Something to apply
+add3 = lambda a, b, c: a + b + c
+# Partially applying `2` and `3` to `add3` gives you a one-argument function
+five_plus = partial(add3, 2, 3) # (c) => 2 + 3 + c
 
-// Something to apply
-const add3 = (a, b, c) => a + b + c
-
-// Partially applying `2` and `3` to `add3` gives you a one-argument function
-const fivePlus = partial(add3, 2, 3) // (c) => 2 + 3 + c
-
-fivePlus(4) // 9
+five_plus(4) # 9
 ```
 
-You can also use `Function.prototype.bind` to partially apply a function in JS:
+You can also use `functools.partial` to partially apply a function in Python:
 
-```js
-const add1More = add3.bind(null, 2, 3) // (c) => 2 + 3 + c
+```python
+from functools import partial 
+
+add_more = partial(add3, 2, 3) # (c) => 2 + 3 + c
 ```
 
 Partial application helps create simpler functions from more complex ones by baking in data when you have it. [Curried](#currying) functions are automatically partially applied.
@@ -168,31 +170,32 @@ The process of converting a function that takes multiple arguments into a functi
 
 Each time the function is called it only accepts one argument and returns a function that takes one argument until all arguments are passed.
 
-```js
-const sum = (a, b) => a + b
+```python
+sum = lambda a, b: a + b 
 
-const curriedSum = (a) => (b) => a + b
+curried_sum = lambda a: lambda b: a + b
 
-curriedSum(40)(2) // 42.
+curried_sum(40)(2) # 42.
 
-const add2 = curriedSum(2) // (b) => 2 + b
+add2 = curried_sum(2) # (b) => 2 + b
 
-add2(10) // 12
-
+add2(10) # 12
 ```
 
 ## Auto Currying
 Transforming a function that takes multiple arguments into one that if given less than its correct number of arguments returns a function that takes the rest. When the function gets the correct number of arguments it is then evaluated.
 
-lodash & Ramda have a `curry` function that works this way.
+The `toolz` module has an currying decorator which works this way
 
-```js
-const add = (x, y) => x + y
+```python
+from toolz import curry 
 
-const curriedAdd = _.curry(add)
-curriedAdd(1, 2) // 3
-curriedAdd(1) // (y) => 1 + y
-curriedAdd(1)(2) // 3
+@curry
+def add(x, y): return x + y 
+
+add(1, 2) # 3
+add(1)    # (y) => 1 + y
+add(1)(2) # 3
 ```
 
 __Further reading__
@@ -203,41 +206,34 @@ __Further reading__
 
 The act of putting two functions together to form a third function where the output of one function is the input of the other.
 
-```js
-const compose = (f, g) => (a) => f(g(a)) // Definition
-const floorAndToString = compose((val) => val.toString(), Math.floor) // Usage
-floorAndToString(121.212121) // '121'
+```python
+import math 
+
+compose = lambda f, g: lambda a: f(g(a)) # Definition
+floor_and_str = compose(str, Math.floor) # Usage
+floor_and_string(121.212121) # '121'
 ```
 
 ## Continuation
 
 At any given point in a program, the part of the code that's yet to be executed is known as a continuation.
 
-```js
-const printAsString = (num) => console.log(`Given ${num}`)
+```python
+print_as_string = lambda num: print(num)
 
-const addOneAndContinue = (num, cc) => {
-  const result = num + 1
-  cc(result)
-}
+# this was previously defined as multi-line function in Javascript
+# however, Python only supports single expression lambdas
+add_one_and_continue = lambda num, cc: cc(num + 1) 
 
-addOneAndContinue(2, printAsString) // 'Given 3'
+add_one_and_continue(2, print_as_string) # 'Given 3'
 ```
 
 Continuations are often seen in asynchronous programming when the program needs to wait to receive data before it can continue. The response is often passed off to the rest of the program, which is the continuation, once it's been received.
 
-```js
-const continueProgramWith = (data) => {
-  // Continues program with data
-}
+```python
+continue_program_with = lambda data: ... # Continues program with data
 
-readFileAsync('path/to/file', (err, response) => {
-  if (err) {
-    // handle error
-    return
-  }
-  continueProgramWith(response)
-})
+read_file_async('path/to/file', lambda err, response: raise err if err else continue_program_with(response))
 ```
 
 ## Purity
@@ -245,33 +241,33 @@ readFileAsync('path/to/file', (err, response) => {
 A function is pure if the return value is only determined by its
 input values, and does not produce side effects.
 
-```js
-const greet = (name) => `Hi, ${name}`
+```python
+greet = lambda name: 'Hi, {}'.format(name)
 
-greet('Brianne') // 'Hi, Brianne'
+greet('Brianne') # 'Hi, Brianne'
 ```
 
 As opposed to each of the following:
 
-```js
-window.name = 'Brianne'
+```python
+name = 'Brianne'
 
-const greet = () => `Hi, ${window.name}`
+greet = lambda: 'Hi, {}'.format(name)
 
 greet() // "Hi, Brianne"
 ```
 
 The above example's output is based on data stored outside of the function...
 
-```js
-let greeting
+```python
+greeting = None
 
-const greet = (name) => {
-  greeting = `Hi, ${name}`
-}
+def greet(name):
+  global greeting
+  greeting = 'Hi, {}'.format(name)
 
 greet('Brianne')
-greeting // "Hi, Brianne"
+greeting # "Hi, Brianne"
 ```
 
 ... and this one modifies state outside of the function.
