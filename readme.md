@@ -78,9 +78,9 @@ The number of arguments a function takes. From words like unary, binary, ternary
 ```python
 from inspect import signature 
 
-sum = lambda a, b: a + b
+add = lambda a, b: a + b
 
-arity = len(signature(sum).parameters)
+arity = len(signature(add).parameters)
 print(arity) # 2
 
 # The arity of add is 2
@@ -276,12 +276,12 @@ greeting # "Hi, Brianne"
 
 A function or expression is said to have a side effect if apart from returning a value, it interacts with (reads from or writes to) external mutable state.
 
-```js
-const differentEveryTime = new Date()
+```python
+different_ever_time = list()
 ```
 
-```js
-console.log('IO is a side effect!')
+```python
+print('IO is a side effect!')
 ```
 
 ## Idempotent
@@ -292,60 +292,62 @@ A function is idempotent if reapplying it to its result does not produce a diffe
 f(f(x)) ≍ f(x)
 ```
 
-```js
-Math.abs(Math.abs(10))
+```python
+import math
+
+math.abs(math.abs(10))
 ```
 
-```js
-sort(sort(sort([2, 1])))
+```python
+sorted(sorted(sorted([2, 1])))
 ```
 
 ## Point-Free Style
 
 Writing functions where the definition does not explicitly identify the arguments used. This style usually requires [currying](#currying) or other [Higher-Order functions](#higher-order-functions-hof). A.K.A Tacit programming.
 
-```js
-// Given
-const map = (fn) => (list) => list.map(fn)
-const add = (a) => (b) => a + b
+```python
+# Given
+map = lambda fn: lambda xs: [fn(x) for x in xs]
+add = lambda a: lambda b: a + b
 
-// Then
+# Then
 
-// Not points-free - `numbers` is an explicit argument
-const incrementAll = (numbers) => map(add(1))(numbers)
+# Not points-free - `numbers` is an explicit argument
+increment_all = lambda numbers: map(add(1))(numbers)
 
-// Points-free - The list is an implicit argument
-const incrementAll2 = map(add(1))
+# Points-free - The list is an implicit argument
+increment_all2 = map(add(1))
 ```
 
-`incrementAll` identifies and uses the parameter `numbers`, so it is not points-free.  `incrementAll2` is written just by combining functions and values, making no mention of its arguments.  It __is__ points-free.
+`increment_all` identifies and uses the parameter `numbers`, so it is not points-free.  `increment_all2` is written just by combining functions and values, making no mention of its arguments.  It __is__ points-free.
 
-Points-free function definitions look just like normal assignments without `function` or `=>`.
+Points-free function definitions look just like normal assignments without `def` or `lambda`.
 
 ## Predicate
 A predicate is a function that returns true or false for a given value. A common use of a predicate is as the callback for array filter.
 
-```js
-const predicate = (a) => a > 2
+```python
+predicate = lambda a: a > 2
 
-;[1, 2, 3, 4].filter(predicate) // [3, 4]
+filter(predicate, [1, 2, 3, 4]) # [3, 4]
 ```
 
 ## Contracts
 
 A contract specifies the obligations and guarantees of the behavior from a function or expression at runtime. This acts as a set of rules that are expected from the input and output of a function or expression, and errors are generally reported whenever a contract is violated.
 
-```js
-// Define our contract : int -> boolean
-const contract = (input) => {
-  if (typeof input === 'number') return true
-  throw new Error('Contract violated: expected int -> boolean')
-}
+```python
+def throw(ex):
+  raise ex
 
-const addOne = (num) => contract(num) && num + 1
+# Define our contract : int -> boolean
+contract = lambda value: True if type(value) is int else throw(Exception('Contract violated: expected int -> boolean'))
 
-addOne(2) // 3
-addOne('some string') // Contract violated: expected int -> boolean
+add1 = (num) => contract(num) and num + 1
+
+add1(2) // 3
+add1('some string') // Contract violated: expected int -> boolean
 ```
 
 ## Category
