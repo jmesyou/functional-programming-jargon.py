@@ -765,22 +765,20 @@ sum(Array([1, 2, 3, 4, 5])) # 15
 
 An `unfold` function. An `unfold` is the opposite of `fold` (`reduce`). It generates a list from a single value.
 
-```js
-const unfold = (f, seed) => {
-  function go(f, seed, acc) {
-    const res = f(seed);
-    return res ? go(f, res[1], acc.concat([res[0]])) : acc;
-  }
+```python
+
+def unfold(f, seed):
+  def go(f, seed, acc):
+    res = f(seed)
+    return go(f, res[1], acc + [res[0]]) if res else acc
+
   return go(f, seed, [])
-}
 ```
 
-```js
-const countDown = n => unfold((n) => {
-  return n <= 0 ? undefined : [n, n - 1]
-}, n)
+```python
+count_down = lambda n: unfold(lambda n: None if n <= 0 else (n, n - 1), n)
 
-countDown(5) // [5, 4, 3, 2, 1]
+count_down(5) # [5, 4, 3, 2, 1]
 ```
 
 ### Hylomorphism
