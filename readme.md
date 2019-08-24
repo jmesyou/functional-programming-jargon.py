@@ -344,7 +344,7 @@ def throw(ex):
 # Define our contract : int -> boolean
 contract = lambda value: True if type(value) is int else throw(Exception('Contract violated: expected int -> boolean'))
 
-add1 = (num) => contract(num) and num + 1
+add1 = lambda num: contract(num) and num + 1
 
 add1(2) // 3
 add1('some string') // Contract violated: expected int -> boolean
@@ -377,29 +377,32 @@ __Further reading__
 
 Anything that can be assigned to a variable.
 
-```js
+```python
+from collections import namedtuple
+Person = namedtuple('Person', 'name age')
 5
-Object.freeze({name: 'John', age: 30}) // The `freeze` function enforces immutability.
-;(a) => a
-;[1]
-undefined
+Person('John', 30)
+lambda a: a
+[1]
+None
 ```
 
 ## Constant
 
 A variable that cannot be reassigned once defined.
 
-```js
-const five = 5
-const john = Object.freeze({name: 'John', age: 30})
+```python
+
+five = 5
+john = Person('John', 30)
 ```
 
 Constants are [referentially transparent](#referential-transparency). That is, they can be replaced with the values that they represent without affecting the result.
 
 With the above two constants the following expression will always return `true`.
 
-```js
-john.age + five === ({name: 'John', age: 30}).age + (5)
+```python
+john.age + five == Person('John' 30).age + 5
 ```
 
 ## Functor
@@ -419,29 +422,37 @@ object.map(compose(f, g)) ≍ object.map(g).map(f)
 
 (`f`, `g` are arbitrary functions)
 
-A common functor in JavaScript is `Array` since it abides to the two functor rules:
+A iterables in Python are functors since they abide by the two functor rules:
 
-```js
-;[1, 2, 3].map(x => x) // = [1, 2, 3]
+```python
+
+map(lambda x: x, [1, 2, 3]) # = [1, 2, 3]
+map(lambda x: x, (1, 2, 3)) # = (1, 2, 3)
 ```
 
 and
 
-```js
-const f = x => x + 1
-const g = x => x * 2
+```python
+f = lambda x: x + 1
+g = lambda x: x * 2
 
-;[1, 2, 3].map(x => f(g(x))) // = [3, 5, 7]
-;[1, 2, 3].map(g).map(f)     // = [3, 5, 7]
+map(lambda x: f(g(x)), [1, 2, 3]) # = [3, 5, 7]
+map(f, map(g, [1, 2, 3]))         # = [3, 5, 7]
 ```
 
 ## Pointed Functor
-An object with an `of` function that puts _any_ single value into it.
+An object with an `of` function that puts _any_ number of values into it. The following property
+`of(f(x)) == of(x).map(f)` must also hold for any pointed functor.
 
-ES2015 adds `Array.of` making arrays a pointed functor.
+We create a custom class `Array` which mimics the original Javascript for a pointed functor.
 
-```js
-Array.of(1) // [1]
+```python 
+
+class Array(list):
+
+  of = lambda *args: Array([a for a in args])
+
+Array.of(1) # [1]
 ```
 
 ## Lift
@@ -450,24 +461,31 @@ Lifting is when you take a value and put it into an object like a [functor](#poi
 
 Some implementations have a function called `lift`, or `liftA2` to make it easier to run functions on functors.
 
-```js
-const liftA2 = (f) => (a, b) => a.map(f).ap(b) // note it's `ap` and not `map`.
+```python
+from oslash import List, Applicative # we import the Applicative 
 
-const mult = a => b => a * b
+liftA2 = lambda f: lambda a, b:  a.map(f) * b # a, b is of type Applicative where (*) is the apply function.
 
-const liftedMult = liftA2(mult) // this function now works on functors like array
+mult = lambda a: lambda b: a * b # (*) is just regular multiplication
 
-liftedMult([1, 2], [3]) // [3, 6]
-liftA2(a => b => a + b)([1, 2], [3, 4]) // [4, 5, 5, 6]
+lifted_mult = liftA2(mult) # this function now works on functors like oslash.List
+
+lifted_mult(List([1, 2]), List([3])) # [3, 6]
+liftA2(lambda a: lambda b: a + b)(List([1, 2]), List([3, 4])) # [4, 5, 5, 6]
+
+# or using oslash, it can alternatively be written as
+
+List([1, 2]).lift_a2(mult, List([3]))
+List([1, 2]).lift_a2(lambda a: lambda b: a + b, List([3, 4]))
 ```
 
 Lifting a one-argument function and applying it does the same thing as `map`.
 
-```js
-const increment = (x) => x + 1
+```python
+increment = lambda x: x + 1
 
-lift(increment)([2]) // [3]
-;[2].map(increment) // [3]
+lift(increment)(List([2])) # [3]
+List([2]).map(increment)  # [3]
 ```
 
 
@@ -478,8 +496,8 @@ behavior of the program is said to be referentially transparent.
 
 Say we have function greet:
 
-```js
-const greet = () => 'Hello World!'
+```python
+greet = lambda: 'Hello World!'
 ```
 
 Any invocation of `greet()` can be replaced with `Hello World!` hence greet is
@@ -493,23 +511,22 @@ When an application is composed of expressions and devoid of side effects, truth
 
 An anonymous function that can be treated like a value.
 
-```js
-;(function (a) {
+```python 
+def(a):
   return a + 1
-})
 
-;(a) => a + 1
+lambda a: a + 1
 ```
 Lambdas are often passed as arguments to Higher-Order functions.
 
-```js
-;[1, 2].map((a) => a + 1) // [2, 3]
+```python
+List([1, 2]).map(lambda x: x + 1) # [2, 3]
 ```
 
 You can assign a lambda to a variable.
 
-```js
-const add1 = (a) => a + 1
+```python
+add1 = lambda a: a + 1
 ```
 
 ## Lambda Calculus
@@ -519,17 +536,16 @@ A branch of mathematics that uses functions to create a [universal model of comp
 
 Lazy evaluation is a call-by-need evaluation mechanism that delays the evaluation of an expression until its value is needed. In functional languages, this allows for structures like infinite lists, which would not normally be available in an imperative language where the sequencing of commands is significant.
 
-```js
-const rand = function*() {
-  while (1 < 2) {
-    yield Math.random()
-  }
-}
+```python
+import random
+def rand(): 
+  while True:
+    yield random.randint(1,101)
 ```
 
-```js
-const randIter = rand()
-randIter.next() // Each execution gives a random value, expression is evaluated on need.
+```python
+randIter = rand()
+next(randIter) # Each execution gives a random value, expression is evaluated on need.
 ```
 
 ## Monoid
@@ -538,41 +554,41 @@ An object with a function that "combines" that object with another of the same t
 
 One simple monoid is the addition of numbers:
 
-```js
-1 + 1 // 2
+```python
+1 + 1 # 2
 ```
 In this case number is the object and `+` is the function.
 
 An "identity" value must also exist that when combined with a value doesn't change it.
 
 The identity value for addition is `0`.
-```js
-1 + 0 // 1
+```python
+1 + 0 # 1
 ```
 
 It's also required that the grouping of operations will not affect the result (associativity):
 
-```js
-1 + (2 + 3) === (1 + 2) + 3 // true
+```python
+1 + (2 + 3) == (1 + 2) + 3 # true
 ```
 
-Array concatenation also forms a monoid:
+List concatenation also forms a monoid:
 
-```js
-;[1, 2].concat([3, 4]) // [1, 2, 3, 4]
+```python
+[1, 2] + [3, 4] # [1, 2, 3, 4]
 ```
 
 The identity value is empty array `[]`
 
-```js
-;[1, 2].concat([]) // [1, 2]
+```python
+[1, 2] + [] # [1, 2]
 ```
 
 If identity and compose functions are provided, functions themselves form a monoid:
 
-```js
-const identity = (a) => a
-const compose = (f, g) => (x) => f(g(x))
+```python
+identity = lambda a: a
+compose = lambda f, g: lambda x: f(g(x))
 ```
 `foo` is any function that takes one argument.
 ```
@@ -583,17 +599,26 @@ compose(foo, identity) ≍ compose(identity, foo) ≍ foo
 
 A monad is an object with [`of`](#pointed-functor) and `chain` functions. `chain` is like [`map`](#functor) except it un-nests the resulting nested object.
 
-```js
-// Implementation
-Array.prototype.chain = function (f) {
-  return this.reduce((acc, it) => acc.concat(f(it)), [])
-}
+```python
+from pymonad.List import *
+from functools import reduce
+#implementation
+class Array(list):
 
-// Usage
-Array.of('cat,dog', 'fish,bird').chain((a) => a.split(',')) // ['cat', 'dog', 'fish', 'bird']
+  def of(*args): 
+    return Array([a for a in args])
 
-// Contrast to map
-Array.of('cat,dog', 'fish,bird').map((a) => a.split(',')) // [['cat', 'dog'], ['fish', 'bird']]
+  def chain(self, f):
+    return reduce(lambda acc, it: acc + f(it), self[:], [])
+
+  def map(self, f):
+    return [f(x) for x in self[:]]
+
+# Usage
+Array.of('cat,dog', 'fish,bird').chain(lambda a: a.split(',')) // ['cat', 'dog', 'fish', 'bird']
+
+# Contrast to map
+Array.of('cat,dog', 'fish,bird').map(lambda a: a.split(',')) // [['cat', 'dog'], ['fish', 'bird']]
 ```
 
 `of` is also known as `return` in other functional languages.
@@ -633,6 +658,7 @@ An applicative functor is an object with an `ap` function. `ap` applies a functi
 
 ```js
 // Implementation
+
 Array.prototype.ap = function (xs) {
   return this.reduce((acc, f) => acc.concat(xs.map(f)), [])
 }
