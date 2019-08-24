@@ -615,10 +615,10 @@ class Array(list):
     return [f(x) for x in self[:]]
 
 # Usage
-Array.of('cat,dog', 'fish,bird').chain(lambda a: a.split(',')) // ['cat', 'dog', 'fish', 'bird']
+Array.of('cat,dog', 'fish,bird').chain(lambda a: a.split(',')) # ['cat', 'dog', 'fish', 'bird']
 
 # Contrast to map
-Array.of('cat,dog', 'fish,bird').map(lambda a: a.split(',')) // [['cat', 'dog'], ['fish', 'bird']]
+Array.of('cat,dog', 'fish,bird').map(lambda a: a.split(',')) # [['cat', 'dog'], ['fish', 'bird']]
 ```
 
 `of` is also known as `return` in other functional languages.
@@ -628,62 +628,74 @@ Array.of('cat,dog', 'fish,bird').map(lambda a: a.split(',')) // [['cat', 'dog'],
 
 An object that has `extract` and `extend` functions.
 
-```js
-const CoIdentity = (v) => ({
-  val: v,
-  extract () {
-    return this.val
-  },
-  extend (f) {
-    return CoIdentity(f(this))
-  }
-})
+```python
+class CoIdentity:
+
+  def __init__(self, v):
+    self.val = v
+
+  def extract(self):
+    return self.val
+
+  def extend(f):
+    return CoIdentity(f(self))
 ```
 
 Extract takes a value out of a functor.
 
-```js
-CoIdentity(1).extract() // 1
+```python
+CoIdentity(1).extract() # 1
 ```
 
 Extend runs a function on the comonad. The function should return the same type as the comonad.
 
-```js
-CoIdentity(1).extend((co) => co.extract() + 1) // CoIdentity(2)
+```python
+CoIdentity(1).extend(lambda co => co.extract() + 1) # CoIdentity(2)
 ```
 
 ## Applicative Functor
 
 An applicative functor is an object with an `ap` function. `ap` applies a function in the object to a value in another object of the same type.
 
-```js
-// Implementation
+```python
+from functools import reduce
+# Implementation
 
-Array.prototype.ap = function (xs) {
-  return this.reduce((acc, f) => acc.concat(xs.map(f)), [])
-}
+class Array(list):
 
-// Example usage
-;[(a) => a + 1].ap([1]) // [2]
+  def of(*args): 
+    return Array([a for a in args])
+
+  def chain(self, f):
+    return reduce(lambda acc, it: acc + f(it), self[:], [])
+
+  def map(self, f):
+    return [f(x) for x in self[:]]
+
+  def ap(self, xs):
+    return reduce(lambda acc, f: acc + (xs.map(f)), self[:], [])
+
+# Example usage
+Array([lambda a: a + 1]).ap(Array([1])) # [2]
 ```
 
 This is useful if you have two objects and you want to apply a binary function to their contents.
 
-```js
-// Arrays that you want to combine
-const arg1 = [1, 3]
-const arg2 = [4, 5]
+```python
+# Arrays that you want to combine
+arg1 = [1, 3]
+arg2 = [4, 5]
 
-// combining function - must be curried for this to work
-const add = (x) => (y) => x + y
+# combining function - must be curried for this to work
+add = lambda x: lambda y: x + y
 
-const partiallyAppliedAdds = [add].ap(arg1) // [(y) => 1 + y, (y) => 3 + y]
+partially_applied_adds = [add].ap(arg1) # [(y) => 1 + y, (y) => 3 + y]
 ```
 
 This gives you an array of functions that you can call `ap` on to get the result:
 
-```js
-partiallyAppliedAdds.ap(arg2) // [5, 6, 7, 8]
+```python
+partially_applied_adds.ap(arg2) # [5, 6, 7, 8]
 ```
 
 ## Morphism
@@ -694,12 +706,12 @@ A transformation function.
 
 A function where the input type is the same as the output.
 
-```js
-// uppercase :: String -> String
-const uppercase = (str) => str.toUpperCase()
+```python
+# uppercase :: String -> String
+uppercase = lambda s: s.upper() 
 
-// decrement :: Number -> Number
-const decrement = (x) => x - 1
+# decrement :: Number -> Number
+decrement = lambda x: x - 1
 ```
 
 ### Isomorphism
@@ -708,35 +720,45 @@ A pair of transformations between 2 types of objects that is structural in natur
 
 For example, 2D coordinates could be stored as an array `[2,3]` or object `{x: 2, y: 3}`.
 
-```js
-// Providing functions to convert in both directions makes them isomorphic.
-const pairToCoords = (pair) => ({x: pair[0], y: pair[1]})
+```python
+# Providing functions to convert in both directions makes them isomorphic.
+from collections import namedtuple
 
-const coordsToPair = (coords) => [coords.x, coords.y]
+Coords = namedtuple('Coords', 'x y')
+pair_to_coords = lambda pair: Coords(pair[0], pair[1])
 
-coordsToPair(pairToCoords([1, 2])) // [1, 2]
+coords_to_pair = lambda coords: [coords.x, coords.y]
 
-pairToCoords(coordsToPair({x: 1, y: 2})) // {x: 1, y: 2}
+coords_to_pair(pair_to_coords([1, 2])) # [1, 2]
+
+pair_to_coords(coords_to_pair(Coords(1, 2))) # Coords(x=1, y=2)
 ```
 
 ### Homomorphism
 
 A homomorphism is just a structure preserving map. In fact, a functor is just a homomorphism between categories as it preserves the original category's structure under the mapping.
 
-```js
-A.of(f).ap(A.of(x)) == A.of(f(x))
+```python
+from pymonad import *
+f * A.unit(x) == A.unit(f(x))
 
-Either.of(_.toUpper).ap(Either.of("oreos")) == Either.of(_.toUpper("oreos"))
+(lambda x: x.upper()) * (Either.unit("oreos")) == Either.unit("oreos".upper())
 ```
 
 ### Catamorphism
 
-A `reduceRight` function that applies a function against an accumulator and each value of the array (from right-to-left) to reduce it to a single value.
+A `reduce_right` function that applies a function against an accumulator and each value of the array (from right-to-left) to reduce it to a single value.
 
-```js
-const sum = xs => xs.reduceRight((acc, x) => acc + x, 0)
+```python
+from functools import reduce
+class Array(list):
 
-sum([1, 2, 3, 4, 5]) // 15
+  def reduce_right(self, f, init):
+    return reduce(f, self[::-1], init)
+
+sum = lambda xs: xs.reduce_right(lambda acc, x: acc + x, 0)
+
+sum(Array([1, 2, 3, 4, 5])) # 15
 ```
 
 ### Anamorphism
