@@ -515,7 +515,7 @@ When an application is composed of expressions and devoid of side effects, truth
 An anonymous function that can be treated like a value.
 
 ```python 
-def(a):
+def f(a):
   return a + 1
 
 lambda a: a + 1
