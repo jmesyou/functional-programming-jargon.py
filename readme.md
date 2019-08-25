@@ -2,9 +2,9 @@
 
 Functional programming (FP) provides many advantages, and its popularity has been increasing as a result. However, each programming paradigm comes with its own unique jargon and FP is no exception. By providing a glossary, we hope to make learning FP easier.
 
-Examples are presented in JavaScript (ES2015). [Why JavaScript?](https://github.com/hemanth/functional-programming-jargon/wiki/Why-JavaScript%3F)
+This is a fork of [Functional Programming Jargon](https://github.com/jmesyou/functional-programming-jargon). Examples are presented in Python3.
 
-Where applicable, this document uses terms defined in the [Fantasy Land spec](https://github.com/fantasyland/fantasy-land)
+This document attempts to adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/) as best as possible 
 
 __Translations__
 * [Portuguese](https://github.com/alexmoreno/jargoes-programacao-funcional)
@@ -422,7 +422,7 @@ object.map(compose(f, g)) ≍ object.map(g).map(f)
 
 (`f`, `g` are arbitrary functions)
 
-A iterables in Python are functors since they abide by the two functor rules:
+Iterables in Python are functors since they abide by the two functor rules:
 
 ```python
 
@@ -462,6 +462,7 @@ Lifting is when you take a value and put it into an object like a [functor](#poi
 Some implementations have a function called `lift`, or `liftA2` to make it easier to run functions on functors.
 
 ```python
+# OSlash applicative library https://github.com/dbrattli/oslash
 from oslash import List, Applicative # we import the Applicative 
 
 liftA2 = lambda f: lambda a, b:  a.map(f) * b # a, b is of type Applicative where (*) is the apply function.
@@ -600,6 +601,7 @@ compose(foo, identity) ≍ compose(identity, foo) ≍ foo
 A monad is an object with [`of`](#pointed-functor) and `chain` functions. `chain` is like [`map`](#functor) except it un-nests the resulting nested object.
 
 ```python
+# pymonad Monad library https://bitbucket.org/jason_delaat/pymonad
 from pymonad.List import *
 from functools import reduce
 #implementation
@@ -787,33 +789,27 @@ The combination of anamorphism and catamorphism.
 
 ### Paramorphism
 
-A function just like `reduceRight`. However, there's a difference:
+A function just like `reduce_right`. However, there's a difference:
 
 In paramorphism, your reducer's arguments are the current value, the reduction of all previous values, and the list of values that formed that reduction.
 
-```js
-// Obviously not safe for lists containing `undefined`,
-// but good enough to make the point.
-const para = (reducer, accumulator, elements) => {
-  if (elements.length === 0)
+```python
+
+def para(reducer, accumulator, elements):
+  if not len(elements):
     return accumulator
 
-  const head = elements[0]
-  const tail = elements.slice(1)
+  head = elements[0]
+  tail = elements[1:]
 
   return reducer(head, tail, para(reducer, accumulator, tail))
-}
 
-const suffixes = list => para(
-  (x, xs, suffxs) => [xs, ... suffxs],
-  [],
-  list
-)
+suffixes = lambda lst: para(lambda x, xs, suffxs: [xs, *suffxs], [], lst)
 
-suffixes([1, 2, 3, 4, 5]) // [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+suffixes([1, 2, 3, 4, 5]) # [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
 ```
 
-The third parameter in the reducer (in the above example, `[x, ... xs]`) is kind of like having a history of what got you to your current acc value.
+The third parameter in the reducer (in the above example, `[x, *xs]`) is kind of like having a history of what got you to your current acc value.
 
 ### Apomorphism
 
@@ -825,90 +821,78 @@ An object that has an `equals` function which can be used to compare other objec
 
 Make array a setoid:
 
-```js
-Array.prototype.equals = function (arr) {
-  const len = this.length
-  if (len !== arr.length) {
-    return false
-  }
-  for (let i = 0; i < len; i++) {
-    if (this[i] !== arr[i]) {
-      return false
-    }
-  }
-  return true
-}
+```python 
 
-;[1, 2].equals([1, 2]) // true
-;[1, 2].equals([0]) // false
+class Array(list):
+
+  def equals(self, other):
+    if len(self) != len(other):
+      return False 
+    else:
+      return reduce(lambda ident, pair: ident and (pair[0] == pair[1]), zip(self[:], other[:]), True)
+
+Array([1, 2]).equals(Array([1, 2])) # true
+Array([1, 2]).equals(Array([0])) # false
 ```
 
 ## Semigroup
 
 An object that has a `concat` function that combines it with another object of the same type.
 
-```js
-;[1].concat([2]) // [1, 2]
+```python
+[1] + [2] # [1, 2]
 ```
 
 ## Foldable
 
 An object that has a `reduce` function that applies a function against an accumulator and each element in the array (from left to right) to reduce it to a single value.
 
-```js
-const sum = (list) => list.reduce((acc, val) => acc + val, 0)
-sum([1, 2, 3]) // 6
+```python
+sum = lambda lst: reduce(lambda acc, x: acc + x, lst, 0)
+sum([1, 2, 3]) # 6
 ```
 
 ## Lens ##
 A lens is a structure (often an object or function) that pairs a getter and a non-mutating setter for some other data
 structure.
 
-```js
-// Using [Ramda's lens](http://ramdajs.com/docs/#lens)
-const nameLens = R.lens(
-  // getter for name property on an object
-  (obj) => obj.name,
-  // setter for name property
-  (val, obj) => Object.assign({}, obj, {name: val})
-)
+```python
+from lenses import lens
+from copy import deepcopy
+# Using [python-lenses](https://python-lenses.readthedocs.io/en/latest/tutorial/methods.html)
+
+name_lens = lens.name # we create an unbound lens which accesses the name variable of an object
 ```
 
 Having the pair of get and set for a given data structure enables a few key features.
 
-```js
-const person = {name: 'Gertrude Blanch'}
+```python
+from collections import namedtuple
 
-// invoke the getter
-R.view(nameLens, person) // 'Gertrude Blanch'
+Person = namedtuple('Person', 'name')
+person = Person('Gertrude Blanch')
 
-// invoke the setter
-R.set(nameLens, 'Shafi Goldwasser', person) // {name: 'Shafi Goldwasser'}
+# invoke the getter
+name_lens.get(person) # 'Gertrude Blanch'
 
-// run a function on the value in the structure
-R.over(nameLens, uppercase, person) // {name: 'GERTRUDE BLANCH'}
+# invoke the setter
+name_lens.set('Shafi Goldwasser')(person) # Person(name='Shafi Goldwasser')
+
+# run a function on the value in the structure
+name_lens.modify(lambda x: x.upper())(person) # Person(name='GERTRUDE BLANCH')
 ```
 
 Lenses are also composable. This allows easy immutable updates to deeply nested data.
 
-```js
-// This lens focuses on the first item in a non-empty array
-const firstLens = R.lens(
-  // get first item in array
-  xs => xs[0],
-  // non-mutating setter for first item in array
-  (val, [__, ...xs]) => [val, ...xs]
-)
+```python
+# This lens focuses on the first item in a non-empty array
+first_lens = lens[0]
 
-const people = [{name: 'Gertrude Blanch'}, {name: 'Shafi Goldwasser'}]
+people = [Person('Gertrude Blanch'), Person('Shafi Goldwasser')]
 
-// Despite what you may assume, lenses compose left-to-right.
-R.over(compose(firstLens, nameLens), uppercase, people) // [{'name': 'GERTRUDE BLANCH'}, {'name': 'Shafi Goldwasser'}]
+# Despite what you may assume, lenses compose left-to-right.
+(first_lens & name_lens).modify(lambda x: x.upper())(people) # [Person(name='GERTRUDE BLANCH'), Person(name='Shafi Goldwasser')]
 ```
-
-Other implementations:
-* [partial.lenses](https://github.com/calmm-js/partial.lenses) - Tasty syntax sugar and a lot of powerful features
-* [nanoscope](http://www.kovach.me/nanoscope/) - Fluent-interface
 
 ## Type Signatures
 
@@ -916,28 +900,29 @@ Often functions in JavaScript will include comments that indicate the types of t
 
 There's quite a bit of variance across the community but they often follow the following patterns:
 
-```js
-// functionName :: firstArgType -> secondArgType -> returnType
+```python
+# function :: a -> b -> c
 
-// add :: Number -> Number -> Number
-const add = (x) => (y) => x + y
+# add :: int -> int -> int
+# alternatively could be float -> float -> float
+add = lambda y: lambda x: x + y
 
-// increment :: Number -> Number
-const increment = (x) => x + 1
+# increment :: int -> int
+increment = lambda x: x + 1
 ```
 
 If a function accepts another function as an argument it is wrapped in parentheses.
 
-```js
-// call :: (a -> b) -> a -> b
-const call = (f) => (x) => f(x)
+```python
+# call :: (a -> b) -> a -> b
+call = lambda f: lambda x: f(x)
 ```
 
 The letters `a`, `b`, `c`, `d` are used to signify that the argument can be of any type. The following version of `map` takes a function that transforms a value of some type `a` into another type `b`, an array of values of type `a`, and returns an array of values of type `b`.
 
-```js
-// map :: (a -> b) -> [a] -> [b]
-const map = (f) => (list) => list.map(f)
+```python
+# map :: (a -> b) -> [a] -> [b]
+map(f, lst)
 ```
 
 __Further reading__
@@ -951,29 +936,30 @@ A composite type made from putting other types together. Two common classes of a
 ### Sum type
 A Sum type is the combination of two types together into another one. It is called sum because the number of possible values in the result type is the sum of the input types.
 
-JavaScript doesn't have types like this but we can use `Set`s to pretend:
-```js
-// imagine that rather than sets here we have types that can only have these values
-const bools = new Set([true, false])
-const halfTrue = new Set(['half-true'])
+JavaScript doesn't have types like this (neither does python) but we can use `Set`s to pretend:
+```python
+# imagine that rather than sets here we have types that can only have these values
+bools = set([True, False])
+half_true = set(['half-true'])
 
-// The weakLogic type contains the sum of the values from bools and halfTrue
-const weakLogicValues = new Set([...bools, ...halfTrue])
+# The weakLogic type contains the sum of the values from bools and halfTrue
+weak_logic_values = bools.union(half_true)
 ```
 
 Sum types are sometimes called union types, discriminated unions, or tagged unions.
 
-There's a [couple](https://github.com/paldepind/union-type) [libraries](https://github.com/puffnfresh/daggy) in JS which help with defining and using union types.
-
-Flow includes [union types](https://flow.org/en/docs/types/unions/) and TypeScript has [Enums](https://www.typescriptlang.org/docs/handbook/enums.html) to serve the same role.
+The [sumtypes](https://github.com/radix/sumtypes/) library in Python which help with defining and using union types.
 
 ### Product type
 
 A **product** type combines types together in a way you're probably more familiar with:
 
-```js
-// point :: (Number, Number) -> {x: Number, y: Number}
-const point = (x, y) => ({ x, y })
+```python
+from collections import namedtuple
+
+Point = namedtuple('Point', 'x y')
+# point :: (Number, Number) -> {x: Number, y: Number}
+point = lambda pair: Point(x, y)
 ```
 It's called a product because the total possible values of the data structure is the product of the different values. Many languages have a tuple type which is the simplest formulation of a product type.
 
@@ -984,46 +970,47 @@ Option is a [sum type](#sum-type) with two cases often called `Some` and `None`.
 
 Option is useful for composing functions that might not return a value.
 
-```js
-// Naive definition
+```python
+# Naive definition
 
-const Some = (v) => ({
-  val: v,
-  map (f) {
-    return Some(f(this.val))
-  },
-  chain (f) {
-    return f(this.val)
-  }
-})
+class _Some:
+  
+  def __init__(self, v):
+    self.val = v
 
-const None = () => ({
-  map (f) {
-    return this
-  },
-  chain (f) {
-    return this
-  }
-})
+  def map(self, f):
+    return _Some(f(self.val))
 
-// maybeProp :: (String, {a}) -> Option a
-const maybeProp = (key, obj) => typeof obj[key] === 'undefined' ? None() : Some(obj[key])
+  def chain(self, f):
+    return f(self.val)
+  
+# None is a keyword in python
+class _None:
+
+  def map(self, f):
+    return self
+
+  def chain(self, f):
+    return self
+
+# maybe_prop :: String -> (String => a) -> Option a
+maybe_prop = lambda key, obj: _None() if key not in obj else Some(obj[key])
 ```
 Use `chain` to sequence functions that return `Option`s
-```js
+```python
 
-// getItem :: Cart -> Option CartItem
-const getItem = (cart) => maybeProp('item', cart)
+# get_item :: Cart -> Option CartItem
+get_item = lambda cart: maybe_prop('item', cart)
 
-// getPrice :: Item -> Option Number
-const getPrice = (item) => maybeProp('price', item)
+# get_price :: Cart -> Option Float
+get_price = lambda item: maybe_prop('price', item)
 
-// getNestedPrice :: cart -> Option a
-const getNestedPrice = (cart) => getItem(cart).chain(getPrice)
+# get_nested_price :: Cart -> Option a
+get_nested_price = lambda cart: get_item(cart).chain(get_price)
 
-getNestedPrice({}) // None()
-getNestedPrice({item: {foo: 1}}) // None()
-getNestedPrice({item: {price: 9.99}}) // Some(9.99)
+get_nested_price({}) # _None()
+get_nested_price({"item": {"foo": 1}}) # _None()
+get_nested_price({"item": {"price": 9.99}}) # _Some(9.99)
 ```
 
 `Option` is also known as `Maybe`. `Some` is sometimes called `Just`. `None` is sometimes called `Nothing`.
@@ -1031,97 +1018,95 @@ getNestedPrice({item: {price: 9.99}}) // Some(9.99)
 ## Function
 A **function** `f :: A => B` is an expression - often called arrow or lambda expression - with **exactly one (immutable)** parameter of type `A` and **exactly one** return value of type `B`. That value depends entirely on the argument, making functions context-independant, or [referentially transparent](#referential-transparency). What is implied here is that a function must not produce any hidden [side effects](#side-effects) - a function is always [pure](#purity), by definition. These properties make functions pleasant to work with: they are entirely deterministic and therefore predictable. Functions enable working with code as data, abstracting over behaviour:
 
-```js
-// times2 :: Number -> Number
-const times2 = n => n * 2
+```python
+# times2 :: Number -> Number
+times2 = lambda n: n * 2
 
-[1, 2, 3].map(times2) // [2, 4, 6]
+map(times2, [1, 2, 3] # [2, 4, 6]
 ```
 
 ## Partial function
 A partial function is a [function](#function) which is not defined for all arguments - it might return an unexpected result or may never terminate. Partial functions add cognitive overhead, they are harder to reason about and can lead to runtime errors. Some examples:
-```js
-// example 1: sum of the list
-// sum :: [Number] -> Number
-const sum = arr => arr.reduce((a, b) => a + b)
-sum([1, 2, 3]) // 6
-sum([]) // TypeError: Reduce of empty array with no initial value
+```python
+from functools import partial
+# example 1: sum of the list
+# sum :: [int] -> int
+sum = partial(reduce, lambda a, b: a + b, arr)
+sum([1, 2, 3]) # 6
+sum([])        # TypeError: reduce() of empty sequence with no initial value
 
-// example 2: get the first item in list
-// first :: [A] -> A
-const first = a => a[0]
-first([42]) // 42
-first([]) // undefined
-//or even worse:
-first([[42]])[0] // 42
-first([])[0] // Uncaught TypeError: Cannot read property '0' of undefined
+# example 2: get the first item in list
+# first :: [a] -> a
+first = lambda a: a[0]
+first([42]) # 42
+first([])   # IndexError
+# or even worse:
+first([[42]])[0] # 42
+first([])[0]     # Uncaught TypeError: an IndexError is throw instead
 
-// example 3: repeat function N times
-// times :: Number -> (Number -> Number) -> Number
-const times = n => fn => n && (fn(n), times(n - 1)(fn))
-times(3)(console.log)
-// 3
-// 2
-// 1
-times(-1)(console.log)
-// RangeError: Maximum call stack size exceeded
+# example 3: repeat function N times
+# times :: int -> (int -> int) -> int
+times = lambda n: lambda fn: n and (fn(n), times(n - 1)(fn))
+times(3)(print)
+# 3
+# 2
+# 1
+# out: (None, (None, (None, 0)))
+times(-1)(print)
+# RecursionError: maximum recursion depth exceeded while calling a Python object
 ```
 
 ### Dealing with partial functions
 Partial functions are dangerous as they need to be treated with great caution. You might get an unexpected (wrong) result or run into runtime errors. Sometimes a partial function might not return at all. Being aware of and treating all these edge cases accordingly can become very tedious.
 Fortunately a partial function can be converted to a regular (or total) one. We can provide default values or use guards to deal with inputs for which the (previously) partial function is undefined. Utilizing the [`Option`](#Option) type, we can yield either `Some(value)` or `None` where we would otherwise have behaved unexpectedly:
-```js
-// example 1: sum of the list
-// we can provide default value so it will always return result
-// sum :: [Number] -> Number
-const sum = arr => arr.reduce((a, b) => a + b, 0)
-sum([1, 2, 3]) // 6
-sum([]) // 0
+```python
 
-// example 2: get the first item in list
-// change result to Option
-// first :: [A] -> Option A
-const first = a => a.length ? Some(a[0]) : None()
-first([42]).map(a => console.log(a)) // 42
-first([]).map(a => console.log(a)) // console.log won't execute at all
-//our previous worst case
-first([[42]]).map(a => console.log(a[0])) // 42
-first([]).map(a => console.log(a[0])) // won't execte, so we won't have error here
-// more of that, you will know by function return type (Option)
-// that you should use `.map` method to access the data and you will never forget
-// to check your input because such check become built-in into the function
+# re-order function arguments for easier partial function application
+_reduce = lambda fn, init, seq: reduce(fn, seq, init) 
+# example 1: sum of the list
+# we can provide default value so it will always return result
+# sum :: [int] -> int
 
-// example 3: repeat function N times
-// we should make function always terminate by changing conditions:
-// times :: Number -> (Number -> Number) -> Number
-const times = n => fn => n > 0 && (fn(n), times(n - 1)(fn))
-times(3)(console.log)
-// 3
-// 2
-// 1
-times(-1)(console.log)
-// won't execute anything
+sum = partial(_reduce, lambda a, b: a + b, 0)
+sum([1, 2, 3]) # 6
+sum([]) # 0
+
+# example 2: get the first item in list
+# change result to Option
+# first :: [A] -> Option A
+first = lambda a: _Some(a[0]) if len(a) else _None()
+first([42]).map(print) # 42
+first([]).map(print) # print won't execute at all
+# our previous worst case
+first([[42]]).map(lambda a: print(a[0])) # 42
+first([]).map(lambda a: print(a[0])) # won't execute, so we won't have error here
+# more of that, you will know by function return type (Option)
+# that you should use `.map` method to access the data and you will never forget
+# to check your input because such check become built-in into the function
+
+# example 3: repeat function N times
+# we should make function always terminate by changing conditions:
+# times :: int -> (int -> int) -> int
+times = lambda n: lambda fn: n > 0 and (fn(n), times(n - 1)(fn))
+times(3)(print)
+# 3
+# 2
+# 1
+times(-1)(print)
+# won't execute anything
 ```
 Making your partial functions total ones, these kinds of runtime errors can be prevented. Always returning a value will also make for code that is both easier to maintain as well as to reason about.
 
-## Functional Programming Libraries in JavaScript
+## Functional Programming Libraries in Python
 
-* [mori](https://github.com/swannodette/mori)
-* [Immutable](https://github.com/facebook/immutable-js/)
-* [Immer](https://github.com/mweststrate/immer)
-* [Ramda](https://github.com/ramda/ramda)
-* [ramda-adjunct](https://github.com/char0n/ramda-adjunct)
-* [Folktale](http://folktale.origamitower.com/)
-* [monet.js](https://cwmyers.github.io/monet.js/)
-* [lodash](https://github.com/lodash/lodash)
-* [Underscore.js](https://github.com/jashkenas/underscore)
-* [Lazy.js](https://github.com/dtao/lazy.js)
-* [maryamyriameliamurphies.js](https://github.com/sjsyrek/maryamyriameliamurphies.js)
-* [Haskell in ES6](https://github.com/casualjavascript/haskell-in-es6)
-* [Sanctuary](https://github.com/sanctuary-js/sanctuary)
-* [Crocks](https://github.com/evilsoft/crocks)
-* [Fluture](https://github.com/fluture-js/Fluture)
-* [fp-ts](https://github.com/gcanti/fp-ts)
+### In This Doc
+  * [functools](https://docs.python.org/3/library/functools.html)
+  * [oslash](https://github.com/dbrattli/oslash)
+  * [python-lenses](https://github.com/ingolemo/python-lenses)
+  * [pymonad](https://bitbucket.org/jason_delaat/pymonad)
+  * [toolz](https://github.com/pytoolz/toolz)
+
+A comprehensive curated list of function programming libraries for Python can be found [here](https://github.com/sfermigier/awesome-functional-python_)
 
 ---
 
