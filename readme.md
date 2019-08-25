@@ -4,7 +4,9 @@ Functional programming (FP) provides many advantages, and its popularity has bee
 
 This is a fork of [Functional Programming Jargon](https://github.com/jmesyou/functional-programming-jargon). Examples are presented in Python3.
 
-This document attempts to adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/) as best as possible 
+This document attempts to adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/) as best as possible.
+
+This document is WIP and pull requests are welcome!
 
 __Translations__
 * [Portuguese](https://github.com/alexmoreno/jargoes-programacao-funcional)
