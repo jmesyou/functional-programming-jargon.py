@@ -254,7 +254,7 @@ name = 'Brianne'
 
 greet = lambda: 'Hi, {}'.format(name)
 
-greet() // "Hi, Brianne"
+greet() # "Hi, Brianne"
 ```
 
 The above example's output is based on data stored outside of the function...
@@ -346,8 +346,8 @@ contract = lambda value: True if type(value) is int else throw(Exception('Contra
 
 add1 = lambda num: contract(num) and num + 1
 
-add1(2) // 3
-add1('some string') // Contract violated: expected int -> boolean
+add1(2) # 3
+add1('some string') # Contract violated: expected int -> boolean
 ```
 
 ## Category
@@ -948,7 +948,7 @@ weak_logic_values = bools.union(half_true)
 
 Sum types are sometimes called union types, discriminated unions, or tagged unions.
 
-The [sumtypes](https://github.com/radix/sumtypes/) library in Python which help with defining and using union types.
+The [sumtypes](https://github.com/radix/sumtypes/) library in Python helps with defining and using union types.
 
 ### Product type
 
