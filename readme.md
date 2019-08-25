@@ -1106,7 +1106,7 @@ Making your partial functions total ones, these kinds of runtime errors can be p
   * [pymonad](https://bitbucket.org/jason_delaat/pymonad)
   * [toolz](https://github.com/pytoolz/toolz)
 
-A comprehensive curated list of function programming libraries for Python can be found [here](https://github.com/sfermigier/awesome-functional-python_)
+A comprehensive curated list of functional programming libraries for Python can be found [here](https://github.com/sfermigier/awesome-functional-python_)
 
 ---
 
