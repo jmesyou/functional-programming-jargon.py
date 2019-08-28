@@ -860,28 +860,24 @@ structure.
 
 ```python
 from lenses import lens
-from copy import deepcopy
 # Using [python-lenses](https://python-lenses.readthedocs.io/en/latest/tutorial/methods.html)
 
-name_lens = lens.name # we create an unbound lens which accesses the name variable of an object
+name_lens = lens['name'] # we create an unbound lens which accesses the name key of a dict
 ```
 
 Having the pair of get and set for a given data structure enables a few key features.
 
 ```python
-from collections import namedtuple
-
-Person = namedtuple('Person', 'name')
-person = Person('Gertrude Blanch')
+person = {'name': 'Gertrude Blanch'}
 
 # invoke the getter
-name_lens.get(person) # 'Gertrude Blanch'
+name_lens.get()(person) # 'Gertrude Blanch'
 
 # invoke the setter
-name_lens.set('Shafi Goldwasser')(person) # Person(name='Shafi Goldwasser')
+name_lens.set('Shafi Goldwasser')(person) # {'name': 'Shafi Goldwasser'}
 
 # run a function on the value in the structure
-name_lens.modify(lambda x: x.upper())(person) # Person(name='GERTRUDE BLANCH')
+name_lens.modify(lambda x: x.upper())(person) # {'name': 'GERTRUDE BLANCH'}
 ```
 
 Lenses are also composable. This allows easy immutable updates to deeply nested data.
@@ -890,10 +886,10 @@ Lenses are also composable. This allows easy immutable updates to deeply nested 
 # This lens focuses on the first item in a non-empty array
 first_lens = lens[0]
 
-people = [Person('Gertrude Blanch'), Person('Shafi Goldwasser')]
+people = [{'name': 'Gertrude Blanch'}, {'name': 'Shafi Goldwasser'}]
 
 # Despite what you may assume, lenses compose left-to-right.
-(first_lens & name_lens).modify(lambda x: x.upper())(people) # [Person(name='GERTRUDE BLANCH'), Person(name='Shafi Goldwasser')]
+(first_lens & name_lens).modify(lambda x: x.upper())(people) # [{'name': 'GERTRUDE BLANCH'}, {'name': 'Shafi Goldwasser'}]
 ```
 
 ## Type Signatures
