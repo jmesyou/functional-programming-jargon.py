@@ -862,7 +862,7 @@ structure.
 from lenses import lens
 # Using [python-lenses](https://python-lenses.readthedocs.io/en/latest/tutorial/methods.html)
 
-name_lens = lens['name'] # we create an unbound lens which accesses the name key of a dict
+name_lens = lens['name'] # we create an unbound lens which accesses the value associate with the 'name' key of a dict
 ```
 
 Having the pair of get and set for a given data structure enables a few key features.
