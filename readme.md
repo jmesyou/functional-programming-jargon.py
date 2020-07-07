@@ -654,7 +654,7 @@ CoIdentity(1).extract() # 1
 Extend runs a function on the comonad. The function should return the same type as the comonad.
 
 ```python
-CoIdentity(1).extend(lambda co => co.extract() + 1) # CoIdentity(2)
+CoIdentity(1).extend(lambda co: co.extract() + 1) # CoIdentity(2)
 ```
 
 ## Applicative Functor
